@@ -104,4 +104,4 @@ COPY ./entrypoint.py /workspace/
 
 ENTRYPOINT [ "python3", "/workspace/entrypoint.py" ]
 
-CMD [ "" ]
+CMD [ "--usage" ]
