@@ -4,32 +4,38 @@ LABEL maintainer="Ataf Fazledin Ahamed (github.com/fazledyn)"
 
 ARG CODEQL_VERSION="2.15.5"
 
-ARG VENV_HOME="/workspace/env"
+ARG VENV_DIR="/workspace/env"
 
-ARG CODEQL_HOME="/workspace/tools/"
-
-ARG SEMGREP_HOME="/workspace/tools/semgrep"
+ARG TOOLS_DIR="/workspace/tools/"
 
 RUN apt-get update && apt-get install -y git wget jq python3 python3-pip python3-virtualenv
 
-RUN python3 -m virtualenv ${VENV_HOME}
+RUN python3 -m virtualenv ${VENV_DIR}
 
-RUN "${VENV_HOME}/bin/pip" install semgrep
+RUN "${VENV_DIR}/bin/pip" install semgrep
 
-RUN mkdir -p ${CODEQL_HOME} && \
-    cd /tmp && \
+RUN mkdir -p ${TOOLS_DIR}
+
+RUN cd /tmp && \
     wget https://github.com/github/codeql-action/releases/download/codeql-bundle-v${CODEQL_VERSION}/codeql-bundle-linux64.tar.gz && \
-    tar -xvf /tmp/codeql-bundle-linux64.tar.gz --directory ${CODEQL_HOME} && \
+    tar -xvf /tmp/codeql-bundle-linux64.tar.gz && \
+    mv codeql/ ${TOOLS_DIR} && \
     rm /tmp/codeql-bundle-linux64.tar.gz
 
-ENV PATH="${PATH}:/${CODEQL_HOME}/codeql"
+# add CodeQL to PATH
+ENV PATH="${PATH}:/${TOOLS_DIR}/codeql/"
 
-ENV PATH="${PATH}:/${VENV_HOME}/bin"
+# add Semgrep to PATH
+ENV PATH="${PATH}:/${VENV_DIR}/bin"
 
 RUN codeql pack download trailofbits/cpp-queries trailofbits/go-queries
 
-RUN mkdir -p "${SEMGREP_HOME}/rules" && \
-    cd "${SEMGREP_HOME}/rules" && \
+RUN codeql resolve languages
+
+RUN codeql resolve qlpacks
+
+RUN mkdir -p "${TOOLS_DIR}/semgrep/rules" && \
+    cd "${TOOLS_DIR}/semgrep/rules" && \
     # wget -O auto.yml https://semgrep.dev/c/p/auto && \
     # wget -O brakeman.yml https://semgrep.dev/c/p/brakeman && \
     # wget -O ci.yml https://semgrep.dev/c/p/ci && \
@@ -89,8 +95,8 @@ RUN mkdir -p "${SEMGREP_HOME}/rules" && \
     # wget -O webappsecurityz.3zrr-rules.yml https://semgrep.dev/c/p/webappsecurityz.3zrr-rules && \
     # wget -O traw.c.yml https://semgrep.dev/c/p/traw.c && \
     # wget -O tkisason.javascript-kitchensink.yml https://semgrep.dev/c/p/tkisason.javascript-kitchensink && \
-    sed -i 's/0.0.0.0, ::/0.0.0.0, (colon)(colon)/' ${SEMGREP_HOME}/rules/*.yml && \
-    semgrep -f ${SEMGREP_HOME}/rules --validate --metrics off
+    sed -i 's/0.0.0.0, ::/0.0.0.0, (colon)(colon)/' ${TOOLS_DIR}/semgrep/rules/*.yml && \
+    semgrep -f ${TOOLS_DIR}/semgrep/rules --validate --metrics off
 
 WORKDIR /workspace
 

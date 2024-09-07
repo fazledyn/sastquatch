@@ -3,12 +3,6 @@ import argparse
 import sys
 
 
-arg_parser = argparse.ArgumentParser()
-arg_parser.add_argument("--language", type=str)
-arg_parser.add_argument("--queries", type=str)
-args = arg_parser.parse_args()
-
-
 def print_help():
     sys.stdout.write("Usage: <script> --language $value --queries $value\n")
     sys.stdout.write("Options:                                          \n")
@@ -23,17 +17,26 @@ def print_help():
     sys.stdout.write("\n")
 
 
-if not args.language or not args.queries:
+arg_parser = argparse.ArgumentParser()
+arg_parser.add_argument("--language", type=str)
+arg_parser.add_argument("--queries", type=str)
+arg_parser.add_argument("--usage", action='store_true')
+args = arg_parser.parse_args()
+
+if args.usage:
+    print_help()
+    exit(0)
+elif not args.language or not args.queries:
     print_help()
     exit(0)
 
 
+language = str(args.language).lower()
+queries = str(args.queries).lower()
+querypack = f"{language}-{queries}.qls"
+
 SOURCE_DIR = "/workspace/source"
 RESULT_DIR = "/workspace/result"
-
-language = args.language
-queries = args.queries
-querypack = f"{language}-{queries}.qls"
 
 
 # default CodeQL
@@ -67,4 +70,3 @@ subprocess.run(f"rm -rf {RESULT_DIR}/semgrep-result.temp.sarif", shell=True)
 
 sys.stdout.write("Ending Semgrep Analysis ...\n")
 # ========================================================
-

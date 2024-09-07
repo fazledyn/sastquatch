@@ -109,14 +109,15 @@ def main():
         df = pd.read_csv(csv_path)
 
         for _, row in df.iterrows():
-            git_url = row["git_url"]
-            language = row["language"]
+            git_url = row["repo_url"]
+            language = row["repo_language"]
             process_single(git_url, language)
 
     elif args.git_url:
         process_single(args.git_url, args.language)
 
     else:
+        arg_parser.print_usage()
         exit(0)
 
 
