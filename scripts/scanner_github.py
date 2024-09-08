@@ -4,7 +4,6 @@ import argparse
 import datetime
 import os
 
-from library.server import *
 
 
 arg_parser = argparse.ArgumentParser()
