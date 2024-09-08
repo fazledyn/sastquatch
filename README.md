@@ -18,6 +18,7 @@ Sastquatch is a powerful yet simple static analysis tool that combines the stren
 1. Clone this repository:
     ```bash
     git clone https://github.com/fazledyn/sastquatch
+    cd sastquatch/engine
     ```
 
 2. Build the Docker image:
@@ -28,7 +29,12 @@ Sastquatch is a powerful yet simple static analysis tool that combines the stren
 # Usage
 Run Sastquatch on your codebase:
 ```bash
-docker run --rm -v /path/to/source:/workspace/source -v /path/to/result:/workspace/result -t codeql-container:dev --language LANGUAGE --queries QUERIES
+docker run --rm \
+    -v /path/to/source:/workspace/source \
+    -v /path/to/result:/workspace/result \
+    -t sastquatch:latest \
+    --language LANGUAGE \
+    --queries QUERIES
 ```
 `LANGUAGE` can be any of the below:
 - `python`
