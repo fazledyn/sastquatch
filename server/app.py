@@ -1,14 +1,24 @@
 from flask import request
 from flask import Flask
+from flask_cors import CORS
+from flask_pymongo import PyMongo
 from http import HTTPStatus
 from bson import ObjectId
+from dotenv import load_dotenv
 import os
 
 from sastquatch_library.server import *
-from sastquatch_library.database import *
 
+
+load_dotenv()
 
 app = Flask(__name__)
+CORS(app)
+
+mongo = PyMongo(app, uri=os.getenv("MONGO_URI"))
+user_collection = mongo.db.get_collection(os.getenv("USER_COLLECTION"))
+repo_collection = mongo.db.get_collection(os.getenv("REPO_COLLECTION"))
+bugs_collection = mongo.db.get_collection(os.getenv("BUGS_COLLECTION"))
 
 
 """
@@ -117,206 +127,134 @@ def register():
 
 
 """
-GET /packages
+GET /repositories
 """
-@app.route("/packages", methods=["GET"])
-def get_packages():
+@app.route("/repositories", methods=["GET"])
+def get_repos():
     try:
-        packages = package_collection.find({})
-        packages = list(packages)
+        repos = repo_collection.find({})
+        repos = list(repos)
 
         return create_response(
             success=True,
-            message="Successfully Queried All Packages",
+            message="Successfully Queried All Repositories",
             data={
-                "packages": packages
+                "repos": repos
             },
             status=HTTPStatus.OK
         )
     except Exception as e:
         print(e)
-
         return create_response(
             success=False,
-            message="Error While Quering Packages",
+            message="Error While Quering Repos",
             status=HTTPStatus.INTERNAL_SERVER_ERROR
         )
 
 
 """
-GET /packages/ECOSYSTEM
+GET /repositories/PLATFORM
 """
-@app.route("/packages/<ecosystem>", methods=["GET"])
-def get_packages_ecosystem(ecosystem: str):
+@app.route("/repositories/<platform>", methods=["GET"])
+def get_repos_platform(platform: str):
     try:
-        ecosystem = ecosystem.lower()
-        packages = package_collection.find({
-            "ecosystem": ecosystem
+        platform = platform.upper()
+        repos = repo_collection.find({
+            "platform": platform
         })
-        packages = list(packages)
+        repos = list(repos)
 
         return create_response(
             success=True,
-            message="Successfully Queried All Ecosystem Packages",
+            message="Successfully Queried All Repositories Platform",
             data={
-                "packages": packages
+                "repos": repos
             },
             status=HTTPStatus.OK
         )
     except Exception as e:
         print(e)
-
         return create_response(
             success=False,
-            message="Error While Quering Packages",
+            message="Error While Quering Repos",
             status=HTTPStatus.INTERNAL_SERVER_ERROR
         )
 
 
 """
-GET /packages/ECOSYSTEM/ALIAS
+GET /repositories/PLATFORM/OWNER
 """
-@app.route("/packages/<ecosystem>/<alias>", methods=["GET"])
-def get_packages_ecosystem_alias(ecosystem: str, alias: str):
+@app.route("/repositories/<platform>/<owner>", methods=["GET"])
+def get_repos_platform_owner(platform: str, owner: str):
     try:
-        ecosystem = ecosystem.lower()
-        alias = decode_alias(alias)
-        packages = package_collection.find({
-            "ecosystem": ecosystem,
-            "alias": alias
+        platform = platform.upper()
+        owner = decode_alias(owner.lower())
+        
+        repos = repo_collection.find({
+            "platform": platform,
+            "owner": owner
         })
-        packages = list(packages)
+        repos = list(repos)
 
         return create_response(
             success=True,
-            message="Successfully Queried All Ecosystem Alias Packages",
+            message="Successfully Queried All Repositories Platform Owner",
             data={
-                "packages": packages
+                "repos": repos
             },
             status=HTTPStatus.OK
         )
     except Exception as e:
         print(e)
-
         return create_response(
             success=False,
-            message="Error While Quering Packages",
+            message="Error While Quering Repos",
             status=HTTPStatus.INTERNAL_SERVER_ERROR
         )
 
 
 """
-GET /packages/ECOSYSTEM/ALIAS/VERSION
+GET /repositories/PLATFORM/OWNER/REPO
 """
-@app.route("/packages/<ecosystem>/<alias>/<version>", methods=["GET"])
-def get_packages_ecosystem_alias_version(ecosystem: str, alias: str, version: str):
+@app.route("/repositories/<platform>/<owner>/<repo>", methods=["GET"])
+def get_repos_platform_owner_repo(platform: str, owner: str, repo: str):
     try:
-        ecosystem = ecosystem.lower()
-        alias = decode_alias(alias)
-        version = version.lower()
-        packages = []
-
-        __packages = package_collection.find({
-            "ecosystem": ecosystem,
-            "alias": alias,
-            "version": version
+        platform = platform.upper()
+        owner = decode_alias(owner.lower())
+        repo = decode_alias(repo.lower())
+        
+        repos = repo_collection.find({
+            "platform": platform,
+            "owner": owner,
+            "repo": repo
         })
 
-        for package in list(__packages):
-            package_id = package["_id"]
-            package_alias = package["alias"]
-            package_version = package["version"]
-            package_ecosystem = package["ecosystem"]
-            __problems = problem_collection.find({
-                "package_id": package_id
+        bugs = []
+        for repo in repos:
+            new_bugs = bugs_collection.find({
+                "repo_id": ObjectId(repo["_id"])
             })
-            package_problems = list(__problems)
-            packages.append({
-                "package_id": str(package_id),
-                "package_alias": package_alias,
-                "package_ecosystem": package_ecosystem,
-                "package_version": package_version,
-                "package_problems": package_problems
-            })
+            bugs.extend(list(new_bugs))
 
         return create_response(
             success=True,
-            message="Successfully Queried All Ecosystem Alias Version Packages",
+            message="Successfully Queried All Repositories Platform Owner Repo",
             data={
-                "packages": packages
+                "bugs": bugs
             },
             status=HTTPStatus.OK
         )
     except Exception as e:
         print(e)
-
         return create_response(
             success=False,
-            message="Error While Quering Packages",
-            status=HTTPStatus.INTERNAL_SERVER_ERROR
-        )
-
-
-
-"""
-GET /packages/id/PACKAGE_ID
-"""
-@app.route("/packages/id/<package_id>", methods=["GET"])
-def get_package(package_id: str):
-    try:
-        package = package_collection.find_one({
-            "_id": ObjectId(package_id)
-        })
-        return create_response(
-            success=True,
-            message="Successfully Queried Package",
-            data={
-                "package": package
-            }
-        )
-    except Exception as e:
-        print(e)
-
-        return create_response(
-            success=False,
-            message=f"Error While Querying Package id: {package_id}",
-            status=HTTPStatus.INTERNAL_SERVER_ERROR
-        )
-
-
-"""
-POST /packages
-"""
-@app.route("/packages", methods=["POST"])
-def post_package():
-    try:
-        package_data = request.get_json()
-        package = package_collection.insert_one(package_data)
-        package_id = str(package.inserted_id)
-        return create_response(
-            success=True,
-            message="Package Created Successfully",
-            data={
-                "package_id": package_id
-            },
-            status=HTTPStatus.INTERNAL_SERVER_ERROR
-        )
-    except Exception as e:
-        print(e)
-
-        return create_response(
-            success=False,
-            message="Error While Creating a Package",
+            message="Error While Quering Repos",
             status=HTTPStatus.INTERNAL_SERVER_ERROR
         )
 
 
 # entrypoint
-if __name__ == "__main__":
-
-    from dotenv import load_dotenv
-    load_dotenv()
-    load_database()
+if __name__ == "__main__": 
  
     port = os.getenv("FLASK_PORT") or 3000
     debug = (os.getenv("FLASK_DEBUG").lower() == "true")

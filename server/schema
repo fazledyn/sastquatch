@@ -1,0 +1,29 @@
+User {
+    id          ObjectId    required    @AUTO
+    username    String      required
+    password    String      required
+    admin       Boolean     required
+    verified    Boolean     required
+}
+
+Repo {
+    id          ObjectId    required    @AUTO
+    platform    String      required    @UPPERCASE
+    owner       String      required    @LOWERCASE
+    repo        String      required    @LOWERCASE
+    url         String      required    @LOWERCASE
+    language    String      required    @UPPERCASE
+}
+
+Bugs {
+    id          ObjectId    required    @AUTO
+    repo_id     ObjectId    required    @FOREIGN
+
+    commit      String      required
+    toolname    String      required
+    filename    String      required
+    title       String      required
+    description String      required
+    line_number Number      required
+    level       String      required    @ENUM("H", "M", "L")
+}
