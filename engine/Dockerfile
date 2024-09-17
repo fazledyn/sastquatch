@@ -4,9 +4,13 @@ LABEL maintainer="Ataf Fazledin Ahamed (github.com/fazledyn)"
 
 ARG CODEQL_VERSION="2.15.5"
 
+ARG GO_VERSION="1.23.1"
+
 ARG VENV_DIR="/workspace/env"
 
-ARG TOOLS_DIR="/workspace/tools/"
+ARG GO_DIR="/workspace/go"
+
+ARG TOOLS_DIR="/workspace/tools"
 
 RUN apt-get update && apt-get install -y git wget jq python3 python3-pip python3-virtualenv
 
@@ -14,7 +18,7 @@ RUN python3 -m virtualenv ${VENV_DIR}
 
 RUN "${VENV_DIR}/bin/pip" install semgrep
 
-RUN mkdir -p ${TOOLS_DIR}
+RUN mkdir -p ${TOOLS_DIR} ${GO_DIR}
 
 RUN cd /tmp && \
     wget https://github.com/github/codeql-action/releases/download/codeql-bundle-v${CODEQL_VERSION}/codeql-bundle-linux64.tar.gz && \
@@ -22,11 +26,20 @@ RUN cd /tmp && \
     mv codeql/ ${TOOLS_DIR} && \
     rm /tmp/codeql-bundle-linux64.tar.gz
 
+RUN cd /tmp && \
+    wget https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz && \
+    tar -xvf /tmp/go${GO_VERSION}.linux-amd64.tar.gz && \
+    mv go/* ${GO_DIR}/ && \
+    rm /tmp/go${GO_VERSION}.linux-amd64.tar.gz
+
 # add CodeQL to PATH
 ENV PATH="${PATH}:/${TOOLS_DIR}/codeql/"
 
 # add Semgrep to PATH
 ENV PATH="${PATH}:/${VENV_DIR}/bin"
+
+# add Go to PATH
+ENV PATH="${PATH}:/${GO_DIR}/bin"
 
 RUN codeql pack download trailofbits/cpp-queries trailofbits/go-queries
 

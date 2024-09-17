@@ -7,6 +7,7 @@ def print_help():
     sys.stdout.write("Usage: <script> --language $value --queries $value\n")
     sys.stdout.write("Options:                                          \n")
     sys.stdout.write("--language                                        \n")
+    sys.stdout.write("    go                                            \n")
     sys.stdout.write("    python                                        \n")
     sys.stdout.write("    javascript                                    \n")
     sys.stdout.write("\n")

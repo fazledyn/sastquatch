@@ -92,7 +92,7 @@ def process_single(git_url: str, language: str):
         sarif_dir = os.getenv("SARIF_DIR")
         for sarif_file in os.listdir(res_dir):
             if sarif_file.endswith(".sarif"):
-                final_file = f"github__{owner_name}__{repo_name}__{git_repo_version}__{sarif_file}"
+                final_file = f"github__{language}__{owner_name}__{repo_name}__{git_repo_version}__{sarif_file}"
                 shell(f"cp {res_dir}/{sarif_file} {sarif_dir}/{final_file}")
                 print("SARIF files copied to destination")
 
